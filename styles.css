@@ -1,0 +1,50 @@
+body {
+	background-color: #ededed;
+	font-family: 'Roboto';
+}
+
+/** Container of exam **/
+.exam {
+	background-color: #fff;
+	border-radius: 5px;
+	padding: 30px;
+	width: 500px;
+	margin: 0 auto;
+}
+
+.exam-header {
+	display: flex;
+	flex-direction: right;
+}
+
+.exam-header > span {
+	display: inline-block;
+	width: 150px;
+}
+
+.exam-header > input[type="text"], .exam-header > .exam-header-time {
+	flex: 1;
+}
+
+/** Container of all questions **/
+.exam-questions {
+	margin-top: 30px;
+	margin-bottom: 30px;
+}
+
+/** Container of one question **/
+.exam-question {
+	margin-bottom: 10px;
+}
+
+.exam-question > span {
+	display: block;
+}
+
+.exam-question > textarea {
+	width: 100%;
+}
+
+.exam-question-choices {
+	margin-left: 50px;
+}
