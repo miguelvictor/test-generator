@@ -1,81 +1,18 @@
-var Choice = React.createClass({displayName: "Choice",
-	handleTextChange: function (e) {
-		this.props.onChoiceTextChanged(this.props.index, e.target.value);
-	},
-	toggleChoice: function () {
-		this.props.onToggleChoice(this.props.index);
-	},
-	render: function () {
-		return (
-			React.createElement("div", null, 
-				React.createElement("input", {type: "text", value: this.props.src.choiceText, onChange: this.handleTextChange}), 
-				React.createElement("input", {type: "checkbox", onChange: this.toggleChoice, checked: this.props.src.isCorrect}), 
-				React.createElement("span", null, "Correct Answer")
-			)
-		);
-	}
-});
-
-var Question = React.createClass({displayName: "Question",
-	addChoice: function () {
-		this.props.onAddChoice(this.props.index);
-	},
-	handleTextChange: function (e) {
-		this.props.onQuestionTextChanged(this.props.index, e.target.value);
-	},
-	handleToggleChoice: function (choiceIndex) {
-		this.props.onToggleChoice(this.props.index, choiceIndex);
-	},
-	handleChoiceTextChange: function (choiceIndex, newValue) {
-		this.props.onChoiceTextChanged(this.props.index, choiceIndex, newValue);
-	},
-	render: function () {
-		var _this = this;
-
-		var choices = this.props.src.choices.map(function (choice, index) {
-			return (
-				React.createElement(Choice, {
-					key: index, 
-					index: index, 
-					src: choice, 
-					onToggleChoice: _this.handleToggleChoice, 
-					onChoiceTextChanged: _this.handleChoiceTextChange})
-			);
-		});
-
-		return (
-			React.createElement("div", {className: "exam-question"}, 
-				React.createElement("span", null, "Question ", this.props.src.id), 
-				React.createElement("textarea", {value: this.props.src.questionText, onChange: this.handleTextChange}), 
-				React.createElement("div", {className: "exam-question-choices"}, 
-					choices, 
-					React.createElement("button", {onClick: this.addChoice}, "Add a Choice")
-				)
-			)
-		);
-	}
-});
-
-var Exam = React.createClass({displayName: "Exam",
+var ExamGenerator = React.createClass({displayName: "ExamGenerator",
 	buildNewQuestion: function () {
 		return {
 			'questionText': '',
 			'choices': [
-				{
-					'choiceText': '',
-					'isCorrect': false
-				},
-				{
-					'choiceText': '',
-					'isCorrect': false
-				}
-			]
+				this.buildNewChoice(1),
+				this.buildNewChoice(2)
+			],
+			'correctAnswers': 1
 		};
 	},
-	buildNewChoice: function () {
+	buildNewChoice: function (id) {
 		return {
+			'id': id,
 			'choiceText': '',
-			'isCorrect': false
 		};
 	},
 	getInitialState: function () {
@@ -94,12 +31,27 @@ var Exam = React.createClass({displayName: "Exam",
 	},
 	onAddChoice: function (questionIndex) {
 		var questions = this.state.questions;
-		questions[questionIndex].choices.push(this.buildNewChoice());
+		questions[questionIndex].choices.push(this.buildNewChoice(questions[questionIndex].choices.length + 1));
 		this.setState({'questions': questions});
 	},
 	onToggleChoice: function (questionIndex, choiceIndex) {
 		var questions = this.state.questions;
-		questions[questionIndex].choices[choiceIndex].isCorrect = !questions[questionIndex].choices[choiceIndex].isCorrect;
+		var choicesNodes = document.getElementsByName('choice' + questionIndex);
+		
+		var checkedChoices = [];
+
+		for (var i = 0; i < choicesNodes.length; i++) {
+			if (choicesNodes[i].checked) {
+				checkedChoices.push(choicesNodes[i].dataset.choiceid);
+			}
+		}
+
+		if (checkedChoices.length == 1) {
+			questions[questionIndex].correctAnswers = checkedChoices[0];
+		} else {
+			questions[questionIndex].correctAnswers = checkedChoices;
+		}
+
 		this.setState({'questions': questions});
 	},
 	onChoiceTextChanged: function (questionIndex, choiceIndex, newValue) {
@@ -132,25 +84,26 @@ var Exam = React.createClass({displayName: "Exam",
 		});
 	},
 	jsonifyExam: function () {
-		alert(JSON.stringify(this.state));
+		prompt('Here\'s your exam',JSON.stringify(this.state));
 	},
 	render: function () {
-		var _this = this;
+
 		var questions = this.state.questions.map(function (question, index) {
 			return (
 				React.createElement(Question, {
 					key: index, 
 					index: index, 
 					src: question, 
-					onQuestionTextChanged: _this.onQuestionTextChanged, 
-					onChoiceTextChanged: _this.onChoiceTextChanged, 
-					onToggleChoice: _this.onToggleChoice, 
-					onAddChoice: _this.onAddChoice})
+					onQuestionTextChanged: this.onQuestionTextChanged, 
+					onChoiceTextChanged: this.onChoiceTextChanged, 
+					onToggleChoice: this.onToggleChoice, 
+					onAddChoice: this.onAddChoice})
 			);
-		});
+		}, this);
 
 		return (
 			React.createElement("div", {className: "exam"}, 
+				React.createElement("h1", null, "Exam Generator"), 
 				React.createElement("div", {className: "exam-header"}, 
 					React.createElement("span", null, "Exam Title"), 
 					React.createElement("input", {type: "text", value: this.state.title, onChange: this.handleTitleChange})
@@ -158,9 +111,9 @@ var Exam = React.createClass({displayName: "Exam",
 				React.createElement("div", {className: "exam-header"}, 
 					React.createElement("span", null, "Alloted Time"), 
 					React.createElement("div", {className: "exam-header-time"}, 
-						React.createElement("input", {type: "number", onChange: this.handleHourChange}), 
+						React.createElement("input", {type: "number", value: this.state.hours, onChange: this.handleHourChange}), 
 						React.createElement("span", null, "hours"), 
-						React.createElement("input", {type: "number", onChange: this.handleMinuteChange}), 
+						React.createElement("input", {type: "number", value: this.state.minutes, onChange: this.handleMinuteChange}), 
 						React.createElement("span", null, "minutes")
 					)
 				), 
@@ -174,4 +127,61 @@ var Exam = React.createClass({displayName: "Exam",
 	}
 });
 
-React.render(React.createElement(Exam, null), document.body);
+var Question = React.createClass({displayName: "Question",
+	addChoice: function () {
+		this.props.onAddChoice(this.props.index);
+	},
+	handleTextChange: function (e) {
+		this.props.onQuestionTextChanged(this.props.index, e.target.value);
+	},
+	handleToggleChoice: function (choiceIndex) {
+		this.props.onToggleChoice(this.props.index, choiceIndex);
+	},
+	handleChoiceTextChange: function (choiceIndex, newValue) {
+		this.props.onChoiceTextChanged(this.props.index, choiceIndex, newValue);
+	},
+	render: function () {
+		var choices = this.props.src.choices.map(function (choice, index) {
+			return (
+				React.createElement(Choice, {
+					key: index, 
+					index: index, 
+					src: choice, 
+					group: this.props.index, 
+					onToggleChoice: this.handleToggleChoice, 
+					onChoiceTextChanged: this.handleChoiceTextChange})
+			);
+		}, this);
+
+		return (
+			React.createElement("div", {className: "exam-question"}, 
+				React.createElement("span", null, "Question ", this.props.src.id), 
+				React.createElement("textarea", {value: this.props.src.questionText, onChange: this.handleTextChange}), 
+				React.createElement("div", {className: "exam-question-choices"}, 
+					choices, 
+					React.createElement("button", {onClick: this.addChoice}, "Add a Choice")
+				)
+			)
+		);
+	}
+});
+
+var Choice = React.createClass({displayName: "Choice",
+	handleTextChange: function (e) {
+		this.props.onChoiceTextChanged(this.props.index, e.target.value);
+	},
+	toggleChoice: function () {
+		this.props.onToggleChoice(this.props.index);
+	},
+	render: function () {
+		return (
+			React.createElement("div", null, 
+				React.createElement("input", {type: "text", value: this.props.src.choiceText, onChange: this.handleTextChange}), 
+				React.createElement("input", {type: "checkbox", name: 'choice' + this.props.group, "data-choiceid": this.props.src.id, onChange: this.toggleChoice}), 
+				React.createElement("span", null, "Correct Answer")
+			)
+		);
+	}
+});
+
+React.render(React.createElement(ExamGenerator, null), document.body);

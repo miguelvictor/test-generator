@@ -7,7 +7,7 @@ body {
 .exam {
 	background-color: #fff;
 	border-radius: 5px;
-	padding: 30px;
+	padding: 1px 30px 30px;
 	width: 500px;
 	margin: 0 auto;
 }
