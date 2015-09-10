@@ -6,7 +6,7 @@ var ExamGenerator = React.createClass({
 				this.buildNewChoice(1),
 				this.buildNewChoice(2)
 			],
-			'correctAnswers': 1
+			'correctAnswers': -1
 		};
 	},
 	buildNewChoice: function (id) {
@@ -64,6 +64,23 @@ var ExamGenerator = React.createClass({
 		questions[questionIndex].questionText = newValue;
 		this.setState({'questions': questions});
 	},
+	onRemoveQuestion: function (questionIndex) {
+		if (this.state.questions.length > 1) {
+			var questions = this.state.questions;
+			questions.splice(questionIndex, 1);
+			this.setState({questions: questions});
+		}
+	},
+	onRemoveChoice: function (questionIndex, choiceIndex) {
+		var question = this.state.questions[questionIndex];
+
+		if (question.choices.length > 2) {
+			question.choices.splice(choiceIndex, 1);
+			var questions = this.state.questions;
+			questions[questionIndex] = question;
+			this.setState({questions: questions});
+		}
+	},
 	handleTitleChange: function (e) {
 		this.setState({'title': e.target.value});
 	},
@@ -84,7 +101,37 @@ var ExamGenerator = React.createClass({
 		});
 	},
 	jsonifyExam: function () {
-		prompt('Here\'s your exam',JSON.stringify(this.state));
+		var errors = '';
+		var flag = true;
+
+		this.state.questions.forEach(function(question, i) {
+			if (question.questionText === '') {
+				errors += 'Question #' + (i + 1) + ' is empty.\n';
+			} else {
+				question.choices.forEach(function(choice, j) {
+					if (choice.choiceText === '') {
+						errors += 'Question #' + (i + 1) + ' choice #' + (j + 1) + ' is empty.\n';
+						flag = false;
+					}
+				});
+
+				if (question.correctAnswers === -1) {
+					errors += 'Question #' + (i + 1) + ' has no correct answer(s).\n'
+				} else if (flag &&
+					question.correctAnswers.constructor === Array &&
+					question.correctAnswers.length === question.choices.length) {
+					errors += 'All of the choices in question #' + (i + 1) + ' are correct.\n'
+				}
+			}
+
+			flag = true;
+		});
+
+		if (errors === '') {
+			prompt('Here\'s your exam',JSON.stringify(this.state));
+		} else {
+			alert(errors);
+		}
 	},
 	render: function () {
 
@@ -94,6 +141,8 @@ var ExamGenerator = React.createClass({
 					key={index} 
 					index={index} 
 					src={question} 
+					onRemoveQuestion={this.onRemoveQuestion}
+					onRemoveChoice={this.onRemoveChoice}
 					onQuestionTextChanged={this.onQuestionTextChanged}
 					onChoiceTextChanged={this.onChoiceTextChanged}
 					onToggleChoice={this.onToggleChoice}
@@ -128,6 +177,12 @@ var ExamGenerator = React.createClass({
 });
 
 var Question = React.createClass({
+	removeQuestion: function () {
+		this.props.onRemoveQuestion(this.props.index);
+	},
+	removeChoice: function (choiceIndex) {
+		this.props.onRemoveChoice(this.props.index, choiceIndex);
+	},
 	addChoice: function () {
 		this.props.onAddChoice(this.props.index);
 	},
@@ -148,6 +203,7 @@ var Question = React.createClass({
 					index={index}
 					src={choice}
 					group={this.props.index}
+					onRemoveChoice={this.removeChoice}
 					onToggleChoice={this.handleToggleChoice}
 					onChoiceTextChanged={this.handleChoiceTextChange} />
 			);
@@ -155,7 +211,7 @@ var Question = React.createClass({
 
 		return (
 			<div className="exam-question">
-				<span>Question {this.props.src.id}</span>
+				<span><button onClick={this.removeQuestion}>x</button>Question {this.props.src.id}</span>
 				<textarea value={this.props.src.questionText} onChange={this.handleTextChange} />
 				<div className="exam-question-choices">
 					{choices}
@@ -167,6 +223,9 @@ var Question = React.createClass({
 });
 
 var Choice = React.createClass({
+	removeChoice: function () {
+		this.props.onRemoveChoice(this.props.index);
+	},
 	handleTextChange: function (e) {
 		this.props.onChoiceTextChanged(this.props.index, e.target.value);
 	},
@@ -176,6 +235,7 @@ var Choice = React.createClass({
 	render: function () {
 		return (
 			<div>
+				<button onClick={this.removeChoice}>x</button>
 				<input type="text" value={this.props.src.choiceText} onChange={this.handleTextChange} />
 				<input type="checkbox" name={'choice' + this.props.group} data-choiceid={this.props.src.id} onChange={this.toggleChoice} />
 				<span>Correct Answer</span>
