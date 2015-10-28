@@ -1,3 +1,5 @@
+var QUESTIONS_PER_PAGE = 2;
+
 var ExamPlayer = React.createClass({displayName: "ExamPlayer",
 	getInitialState: function () {
 		return {
@@ -7,7 +9,8 @@ var ExamPlayer = React.createClass({displayName: "ExamPlayer",
 			minutes: 'Loading...',
 			allotedTime: 'Loading...',
 			questions: [],
-			answers: []
+			answers: [],
+			currentPage: 1
 		};
 	},
 	formatRemainingTime: function () {
@@ -114,22 +117,80 @@ var ExamPlayer = React.createClass({displayName: "ExamPlayer",
 
 		this.setState({answers: answers});
 	},
-
+	gotoNext: function () {
+		this.setState({ currentPage: this.state.currentPage + 1 });
+	},
+	gotoPrev: function () {
+		this.setState({ currentPage: this.state.currentPage - 1 });
+	},
 	render: function () {
 		if (this.state.status === 'running') {
 			if (this.state.questions.length) {
+				console.log('Displaying questions for page ' + this.state.currentPage);
+				var index = (this.state.currentPage - 1) * QUESTIONS_PER_PAGE;
+				console.log('Starting index: ' + index);
+				var endIndex = index + QUESTIONS_PER_PAGE;
+				console.log('Ending index: ' + endIndex);
+				var questions = [];
+
+				for (; index < endIndex; index++) {
+					var question = this.state.questions[index];
+					
+					// exit immediately if the last question was already rendered
+					if (typeof question === 'undefined') {
+						break;
+					}
+
+					// if question was already answered
+					if (this.state.answers[index]) {
+						questions.push(
+							React.createElement(Question, {
+								key: index, 
+								index: index, 
+								handleChangeMultiple: this.handleChangeMultiple, 
+								handleChangeSingle: this.handleChangeSingle, 
+								answers: this.state.answers[index], 
+								src: question})
+						);
+					} else {
+						questions.push(
+							React.createElement(Question, {
+								key: index, 
+								index: index, 
+								handleChangeMultiple: this.handleChangeMultiple, 
+								handleChangeSingle: this.handleChangeSingle, 
+								src: question})
+						);
+					}
+				}
+
+				/*
 				var questions = this.state.questions.map(function (question, index) {
 					return (
-						React.createElement(Question, {
-							key: index, 
-							index: index, 
-							handleChangeMultiple: this.handleChangeMultiple, 
-							handleChangeSingle: this.handleChangeSingle, 
-							src: question})
+						<Question
+							key={index}
+							index={index}
+							handleChangeMultiple={this.handleChangeMultiple}
+							handleChangeSingle={this.handleChangeSingle}
+							src={question} />
 					);
 				}, this);
+				*/
 			} else {
 				var questions = React.createElement("p", null, "Loading questions ...");
+			}
+
+
+			if (this.state.currentPage * QUESTIONS_PER_PAGE <= this.state.questions.length) {
+				var btnNext = (
+					React.createElement("button", {ref: "next", onClick: this.gotoNext}, "Next")
+				);
+			}
+
+			if (this.state.currentPage !== 1) {				
+				var btnPrevious = (
+					React.createElement("button", {ref: "prev", onClick: this.gotoPrev}, "Previous")
+				);
 			}
 
 			return (
@@ -138,6 +199,8 @@ var ExamPlayer = React.createClass({displayName: "ExamPlayer",
 					React.createElement("p", null, "Exam Title : ", this.state.title), 
 					React.createElement("p", null, "Remaining Time : ", this.formatRemainingTime()), 
 					questions, 
+					btnPrevious, 
+					btnNext, 
 					React.createElement("button", {onClick: this.submitExam}, "Submit Exam")
 				)
 			);
@@ -166,9 +229,17 @@ var Question = React.createClass({displayName: "Question",
 	render: function () {
 		if (this.props.src.correctAnswers.constructor === Array) {
 			var choices = this.props.src.choices.map(function (choice, index) {
+				if (typeof this.props.answers !== 'undefined') {
+					console.log(typeof this.props.answers);
+					var defaultChecked = $.inArray('' + choice.id, this.props.answers) !== -1;
+					console.log('Answers: ' + JSON.stringify(this.props.answers));
+					console.log('Choice: ' + choice.id);
+					console.log('Result: ' + defaultChecked);
+				}
+
 				return (
 					React.createElement("div", {key: choice.id}, 
-						React.createElement("input", {type: "checkbox", name: 'q' + this.props.index, value: choice.id, onChange: this.handleChange}), 
+						React.createElement("input", {type: "checkbox", name: 'q' + this.props.index, value: choice.id, onChange: this.handleChange, defaultChecked: defaultChecked}), 
 						choice.choiceText, 
 						React.createElement("br", null)
 					)
@@ -176,9 +247,13 @@ var Question = React.createClass({displayName: "Question",
 			}, this);
 		} else {
 			var choices = this.props.src.choices.map(function (choice, index) {
+				if (typeof this.props.answers !== 'undefined') {
+					var defaultChecked = this.props.answers == choice.id;
+				}
+
 				return (
 					React.createElement("div", {key: choice.id}, 
-						React.createElement("input", {type: "radio", name: 'q' + this.props.index, value: choice.id, onChange: this.handleChange}), 
+						React.createElement("input", {type: "radio", name: 'q' + this.props.index, value: choice.id, onChange: this.handleChange, defaultChecked: defaultChecked}), 
 						choice.choiceText, 
 						React.createElement("br", null)
 					)
