@@ -6,7 +6,8 @@ var ExamGenerator = React.createClass({
 				this.buildNewChoice(1),
 				this.buildNewChoice(2)
 			],
-			'correctAnswers': -1
+			'correctAnswers': -1,
+			'correctType': 'and'
 		};
 	},
 	buildNewChoice: function (id) {
@@ -81,6 +82,17 @@ var ExamGenerator = React.createClass({
 			this.setState({questions: questions});
 		}
 	},
+	onCorrectTypeChange: function (questionIndex, correctType) {
+		alert('Question #' + questionIndex + " correctType: " + correctType);
+
+		var questions = this.state.questions;
+		var question = questions[questionIndex];
+		
+		question.correctType = correctType;
+		this.setState({
+			questions: questions
+		});
+	},
 	handleTitleChange: function (e) {
 		this.setState({'title': e.target.value});
 	},
@@ -146,6 +158,7 @@ var ExamGenerator = React.createClass({
 					onQuestionTextChanged={this.onQuestionTextChanged}
 					onChoiceTextChanged={this.onChoiceTextChanged}
 					onToggleChoice={this.onToggleChoice}
+					onCorrectTypeChange={this.onCorrectTypeChange}
 					onAddChoice={this.onAddChoice} />
 			);
 		}, this);
@@ -195,6 +208,9 @@ var Question = React.createClass({
 	handleChoiceTextChange: function (choiceIndex, newValue) {
 		this.props.onChoiceTextChanged(this.props.index, choiceIndex, newValue);
 	},
+	handleCorrectTypeChange: function (e) {
+		this.props.onCorrectTypeChange(this.props.index, e.target.value);
+	},
 	render: function () {
 		var choices = this.props.src.choices.map(function (choice, index) {
 			return (
@@ -209,9 +225,23 @@ var Question = React.createClass({
 			);
 		}, this);
 
+		if (this.props.src.correctAnswers.constructor === Array &&
+			this.props.src.correctAnswers.length) {
+			var options = (
+				<select onChange={this.handleCorrectTypeChange} defaultValue={this.props.src.correctType}>
+					<option value="and">AND</option>
+					<option value="or">OR</option>
+				</select>
+			);
+		}
+
 		return (
 			<div className="exam-question">
-				<span><button onClick={this.removeQuestion}>x</button>Question {this.props.src.id}</span>
+				<span>
+					<button onClick={this.removeQuestion}>x</button>
+					Question {this.props.src.id}
+					{options}		
+				</span>
 				<textarea value={this.props.src.questionText} onChange={this.handleTextChange} />
 				<div className="exam-question-choices">
 					{choices}

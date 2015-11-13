@@ -66,14 +66,39 @@ var ExamPlayer = React.createClass({displayName: "ExamPlayer",
 
 		this.state.questions.forEach(function (question, index) {
 			// for multiple-answer questions 
-			if (question.correctAnswers.constructor === Array && 
-				$(this.state.answers[index]).not(question.correctAnswers).length === 0 &&
-				$(question.correctAnswers).not(this.state.answers[index]).length === 0) {
+			/*if (question.correctAnswers.constructor === Array && 
+				a) {
 				
 				correctAnswers++;
-			} 
+			} OLD CODE*/
+
+			if (typeof this.state.answers[index] === 'undefined') {
+				return;
+			}
+
+			console.log("Question #" + index);
+			if (question.correctAnswers.constructor === Array) {
+				console.log("Answers Type: Array");
+				// and multiple answers
+				if (question.correctType === 'and') {
+					console.log("Correct Answers Type: AND");
+					if ($(this.state.answers[index]).not(question.correctAnswers).length === 0 &&
+						$(question.correctAnswers).not(this.state.answers[index]).length === 0) {
+						correctAnswers++;
+					}
+				} 
+				// or multiple answers
+				else {
+					console.log("Correct Answers Type: OR");
+					if ($.inArray('' + this.state.answers[index], question.correctAnswers)) {
+						console.log(this.state.answers[index] + " is in " + question.correctAnswers);
+						correctAnswers++;	
+					}
+				}
+			}
 			// for single-answer questions
 			else if (question.correctAnswers == this.state.answers[index]) {
+				console.log("Answers Type: Single");
 				correctAnswers++;
 			}
 		}, this);

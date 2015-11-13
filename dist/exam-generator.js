@@ -6,7 +6,8 @@ var ExamGenerator = React.createClass({displayName: "ExamGenerator",
 				this.buildNewChoice(1),
 				this.buildNewChoice(2)
 			],
-			'correctAnswers': -1
+			'correctAnswers': -1,
+			'correctType': 'and'
 		};
 	},
 	buildNewChoice: function (id) {
@@ -81,6 +82,17 @@ var ExamGenerator = React.createClass({displayName: "ExamGenerator",
 			this.setState({questions: questions});
 		}
 	},
+	onCorrectTypeChange: function (questionIndex, correctType) {
+		alert('Question #' + questionIndex + " correctType: " + correctType);
+
+		var questions = this.state.questions;
+		var question = questions[questionIndex];
+		
+		question.correctType = correctType;
+		this.setState({
+			questions: questions
+		});
+	},
 	handleTitleChange: function (e) {
 		this.setState({'title': e.target.value});
 	},
@@ -146,6 +158,7 @@ var ExamGenerator = React.createClass({displayName: "ExamGenerator",
 					onQuestionTextChanged: this.onQuestionTextChanged, 
 					onChoiceTextChanged: this.onChoiceTextChanged, 
 					onToggleChoice: this.onToggleChoice, 
+					onCorrectTypeChange: this.onCorrectTypeChange, 
 					onAddChoice: this.onAddChoice})
 			);
 		}, this);
@@ -195,6 +208,9 @@ var Question = React.createClass({displayName: "Question",
 	handleChoiceTextChange: function (choiceIndex, newValue) {
 		this.props.onChoiceTextChanged(this.props.index, choiceIndex, newValue);
 	},
+	handleCorrectTypeChange: function (e) {
+		this.props.onCorrectTypeChange(this.props.index, e.target.value);
+	},
 	render: function () {
 		var choices = this.props.src.choices.map(function (choice, index) {
 			return (
@@ -209,9 +225,23 @@ var Question = React.createClass({displayName: "Question",
 			);
 		}, this);
 
+		if (this.props.src.correctAnswers.constructor === Array &&
+			this.props.src.correctAnswers.length) {
+			var options = (
+				React.createElement("select", {onChange: this.handleCorrectTypeChange, defaultValue: this.props.src.correctType}, 
+					React.createElement("option", {value: "and"}, "AND"), 
+					React.createElement("option", {value: "or"}, "OR")
+				)
+			);
+		}
+
 		return (
 			React.createElement("div", {className: "exam-question"}, 
-				React.createElement("span", null, React.createElement("button", {onClick: this.removeQuestion}, "x"), "Question ", this.props.src.id), 
+				React.createElement("span", null, 
+					React.createElement("button", {onClick: this.removeQuestion}, "x"), 
+					"Question ", this.props.src.id, 
+					options		
+				), 
 				React.createElement("textarea", {value: this.props.src.questionText, onChange: this.handleTextChange}), 
 				React.createElement("div", {className: "exam-question-choices"}, 
 					choices, 
