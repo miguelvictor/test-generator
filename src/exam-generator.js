@@ -239,7 +239,7 @@ var Question = React.createClass({
 			<div className="exam-question">
 				<span>
 					<button onClick={this.removeQuestion}>x</button>
-					Question {this.props.src.id}
+					Question #{this.props.index  + 1}
 					{options}		
 				</span>
 				<textarea value={this.props.src.questionText} onChange={this.handleTextChange} />

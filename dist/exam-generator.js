@@ -239,7 +239,7 @@ var Question = React.createClass({displayName: "Question",
 			React.createElement("div", {className: "exam-question"}, 
 				React.createElement("span", null, 
 					React.createElement("button", {onClick: this.removeQuestion}, "x"), 
-					"Question ", this.props.src.id, 
+					"Question #", this.props.index  + 1, 
 					options		
 				), 
 				React.createElement("textarea", {value: this.props.src.questionText, onChange: this.handleTextChange}), 
