@@ -155,37 +155,36 @@ var ExamGenerator = React.createClass({
 				hours: exam.hours,
 				minutes: exam.minutes,
 				allotedTime: exam.allotedTime,
-				questions: exam.questions
+				questions: exam.questions,
+				fromLoad: true
 			});
 		} catch (exception) {
 			alert('You entered an invalid JSON');
 		}
 	},
 	componentDidUpdate: function (prevProps, prevState) {
-		this.state.questions.forEach(function(question, index) {
-			if (question.correctAnswers !== -1) {
-				var choiceNodes = document.getElementsByName('choice' + index);
+		if (this.state.fromLoad) {
+			this.setState({ fromLoad: false });
+			this.state.questions.forEach(function(question, index) {
+				if (question.correctAnswers !== -1) {
+					var choiceNodes = document.getElementsByName('choice' + index);
 
-				alert("Question " + index + " answers: " + JSON.stringify(question.correctAnswers));
-				if (question.correctAnswers.constructor === Array) {
-					alert("Have many answers");
-					for (var i = 0; i < choiceNodes.length; i++) {
-						alert("Got choice id " + choiceNodes[i].dataset.choiceid);
-						if (question.correctAnswers.indexOf('' + choiceNodes[i].dataset.choiceid) !== -1) {
-							alert("Choice id " + choiceNodes[i].dataset.choiceid + " is in " + JSON.stringify(question.correctAnswers));
-							choiceNodes[i].checked = true;
+					if (question.correctAnswers.constructor === Array) {
+						for (var i = 0; i < choiceNodes.length; i++) {
+							if (question.correctAnswers.indexOf('' + choiceNodes[i].dataset.choiceid) !== -1) {
+								choiceNodes[i].checked = true;
+							}
 						}
-					}
-				} else {
-					alert("Have one answer");
-					for (var i = 0; i < choiceNodes.length; i++) {
-						if (choiceNodes[i].dataset.choiceid == question.correctAnswers) {
-							choiceNodes[i].checked = true;
+					} else {
+						for (var i = 0; i < choiceNodes.length; i++) {
+							if (choiceNodes[i].dataset.choiceid == question.correctAnswers) {
+								choiceNodes[i].checked = true;
+							}
 						}
 					}
 				}
-			}
-		});
+			});
+		}
 	},
 	render: function () {
 		var questions = this.state.questions.map(function (question, index) {
